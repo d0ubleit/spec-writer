@@ -1,0 +1,71 @@
+mixin: async-jobs
+description: |
+  L4 async-job — background task on the queue (Celery/RQ/etc).
+  Codegen produces a task function + retry policy + queue binding.
+
+adds_types:
+  - id: async-job
+    layer_role: code-boundary
+    prefix: JOB
+    file_pattern: "jobs/{slug}-JOB-{number}.md"
+    up_to_types: [behavior, capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: trigger
+        title: "Trigger"
+        required: true
+        format: markdown
+        guidance: "What enqueues this job: API call, schedule, event, parent job."
+      - id: input
+        title: "Input"
+        required: true
+        format: yaml-block
+        guidance: "Job arguments (typed). Avoid passing whole objects — pass ids."
+      - id: output
+        title: "Output / side effects"
+        required: true
+        format: markdown
+        guidance: |
+          What changes when the job succeeds: DB rows written, files
+          uploaded, downstream jobs enqueued, notifications sent.
+      - id: retry_policy
+        title: "Retry policy"
+        required: true
+        format: yaml-block
+        guidance: |
+          max_attempts: <int>
+          backoff: <fixed | exponential>
+          backoff_seconds: <int>
+          retry_on: [<exception/error classes>]
+          give_up_action: <abort | dead-letter | escalate>
+      - id: invariants
+        title: "Invariants"
+        required: false
+        format: markdown
+        guidance: "Things that must hold across retries: idempotency keys, ordering."
+    required_frontmatter:
+      - queue:
+          description: "Queue name this job runs on"
+          llm_guidance: "Short slug — e.g. default | deploys | imports | content."
+      - idempotent:
+          description: "Whether the job is idempotent"
+          llm_guidance: "true | false. Non-idempotent jobs need a guard (lock, dedup key) noted in invariants."
+      - schedule:
+          description: "Cron / interval if scheduled (empty for on-demand)"
+          llm_guidance: "cron expression or interval (e.g. '0 3 * * *', '15m', or empty)."
+      - roles:
+          description: "Roles allowed to enqueue this job"
+          llm_guidance: |
+            List of role ids defined in the rbac-matrix. Use ["system"]
+            for scheduler-only / job-chain-only jobs. Validated cross-
+            spec against rbac-matrix when that mixin is active.
+
+generator_hints:
+  async-job: |
+    Jobs must be idempotent or guarded. If the source doc doesn't
+    specify retry behaviour, propose sane defaults (3 attempts,
+    exponential backoff) via ask_user and record the answer. Side
+    effects belong in 'Output / side effects' — don't bury them.

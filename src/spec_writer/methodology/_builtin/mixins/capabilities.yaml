@@ -1,0 +1,26 @@
+mixin: capabilities
+description: |
+  L2 capability spec type — what the system does. Middle layer.
+
+adds_types:
+  - id: capability
+    layer_name: capabilities
+    prefix: CAP
+    file_pattern: "{slug}-CAP-{number}.md"
+    up_to_types: [vision]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: actors
+        title: "Actors"
+        required: false
+        format: markdown
+        guidance: "Who initiates / participates in this capability."
+
+generator_hints:
+  capability: |
+    L2 capabilities describe WHAT, not HOW. Reference L1 vision via
+    up_to. Avoid concrete numbers (latency budgets, sizes) — those
+    live in L3/L4.

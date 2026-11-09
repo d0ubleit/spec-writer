@@ -1,0 +1,32 @@
+mixin: vision
+description: |
+  L1 vision spec type — captures intent, scope, success criteria.
+  Source-boundary layer, reads from sources/.
+
+adds_types:
+  - id: vision
+    layer_role: source-boundary
+    prefix: VIS
+    file_pattern: "{slug}-VIS-{number}.md"
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "One-paragraph statement of what this system is for."
+      - id: target_users
+        title: "Target users"
+        required: false
+        format: markdown
+        guidance: "Who uses this. Brief bullet list of actor types."
+      - id: capability_outline
+        title: "Capability outline"
+        required: false
+        format: markdown
+        guidance: "High-level capabilities that L2 will decompose."
+
+generator_hints:
+  vision: |
+    When generating L1 vision, focus on WHY and scope, not HOW or
+    concrete numbers. Keep it ≤500 words. Sources may be non-English;
+    output must be English.

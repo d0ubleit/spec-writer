@@ -1,0 +1,85 @@
+mixin: architecture-views
+description: |
+  L2 arch-view — a single architecture view (C4 lite). Two flavours:
+  - system-context: our system + external actors + integrations
+  - container-view: deployable units inside our boundary + how they
+    talk
+
+  Why L2 and not L1: vision answers WHY; architecture-view answers
+  HOW the system is decomposed at the very top. Capabilities (L2)
+  then break the containers into functional buckets.
+
+adds_types:
+  - id: arch-view
+    layer: L2
+    prefix: ARCH
+    file_pattern: "architecture/{slug}-ARCH-{number}.md"
+    up_to_types: [vision]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "What this view answers; who reads it (architect, new dev, ops)."
+      - id: diagram
+        title: "Diagram"
+        required: true
+        format: markdown
+        guidance: |
+          Mermaid block describing the view. Keep it deterministic:
+          ```mermaid
+          flowchart LR
+            user --> backend
+            backend --> postgres
+          ```
+          Don't paraphrase the diagram in prose — that's what
+          'elements' and 'relationships' are for.
+      - id: elements
+        title: "Elements"
+        required: true
+        format: yaml-block
+        guidance: |
+          Nodes in the view:
+            - id: control-plane
+              kind: container | actor | external-system | data-store
+              tech: <optional, links to tech-choice id>
+              description: <one line>
+      - id: relationships
+        title: "Relationships"
+        required: true
+        format: yaml-block
+        guidance: |
+          Edges between elements:
+            - from: control-plane
+              to: independent-site
+              direction: outbound
+              protocol: ssh | rest | sql | queue | file
+              description: <one line>
+      - id: drivers
+        title: "Drivers"
+        required: false
+        format: markdown
+        guidance: "Quality-reqs this view honours (links to quality-req ids)."
+    required_frontmatter:
+      - view_kind:
+          description: "C4 view level"
+          llm_guidance: "system-context | container-view | component-view."
+
+extends_field:
+  - name: view_kind
+    add_values: [system-context, container-view, component-view]
+
+validators:
+  - id: arch-view-singleton-per-kind
+    on_type: arch-view
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_arch_view_singleton_per_kind
+
+generator_hints:
+  arch-view: |
+    Exactly one system-context per project (you may have several
+    container-views — one per major bounded context). Keep diagrams
+    short — if the Mermaid spans 30 nodes, split into multiple
+    container-views. Elements should link to tech-choice ids where
+    a concrete technology backs the box.

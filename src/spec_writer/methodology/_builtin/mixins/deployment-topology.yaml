@@ -1,0 +1,82 @@
+mixin: deployment-topology
+description: |
+  L4 deployment-topology — a deployable unit's topology: container /
+  pod / replica count, resource limits, scaling policy, failover
+  strategy. One spec per topology unit (control-plane backend,
+  worker pool, postgresql primary, postgresql replicas, redis cluster,
+  clickhouse shards). Codegen emits k8s manifests / docker-compose /
+  terraform from this spec.
+
+adds_types:
+  - id: deployment-topology
+    layer_role: code-boundary
+    prefix: TOP
+    file_pattern: "topology/{slug}-TOP-{number}.md"
+    up_to_types: [capability, quality-req]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: topology
+        title: "Topology"
+        required: true
+        format: yaml-block
+        guidance: |
+          Deployable topology:
+            replicas: <int>
+            min_replicas: <int>
+            max_replicas: <int>
+            placement: <single-node | spread | dedicated>
+            shards: <int, optional>
+      - id: resources
+        title: "Resources"
+        required: true
+        format: yaml-block
+        guidance: |
+          Per-replica limits:
+            cpu: <e.g. 500m | 2>
+            memory: <e.g. 512Mi | 4Gi>
+            storage: <if persistent>
+      - id: scaling
+        title: "Scaling policy"
+        required: false
+        format: yaml-block
+        guidance: |
+          Trigger conditions:
+            metric: <cpu | rps | queue-depth>
+            threshold: <value>
+            cooldown: <seconds>
+      - id: failover
+        title: "Failover"
+        required: false
+        format: markdown
+        guidance: "Primary/replica setup, election, recovery procedure."
+      - id: dependencies
+        title: "Dependencies"
+        required: false
+        format: markdown
+        guidance: "Other topology units this one depends on (e.g. backend → postgres-primary)."
+    required_frontmatter:
+      - target:
+          description: "Deployment target"
+          llm_guidance: "k8s | docker-compose | systemd | terraform-vm."
+      - unit_kind:
+          description: "What runs in this unit"
+          llm_guidance: "service | worker | database | cache | proxy | analytics-store | message-queue."
+      - phase:
+          description: "Project phase this topology is in scope for"
+          llm_guidance: "mvp | stage-2 | stage-3."
+
+extends_field:
+  - name: target
+    add_values: [k8s, docker-compose, systemd, terraform-vm]
+  - name: unit_kind
+    add_values: [service, worker, database, cache, proxy, analytics-store, message-queue]
+
+generator_hints:
+  deployment-topology: |
+    One spec per deployable unit, not per environment — environment
+    differences live in config overrides, not separate topology
+    specs. Always include resource limits, even rough ones — codegen
+    can't emit valid k8s manifests without them.

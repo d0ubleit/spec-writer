@@ -1,0 +1,58 @@
+mixin: fixtures
+description: |
+  L4 fixture — realistic example data attached to an entity-schema
+  or api-contract. Used by tests, smoke runs, and codegen to emit
+  meaningful fixtures instead of `{"foo": "bar"}` placeholders.
+
+adds_types:
+  - id: fixture
+    layer_role: code-boundary
+    prefix: FIX
+    file_pattern: "fixtures/{slug}-FIX-{number}.md"
+    up_to_types: [entity-schema, api-contract]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "What scenario this fixture supports (happy path, edge, error)."
+      - id: data
+        title: "Data"
+        required: true
+        format: yaml-block
+        guidance: |
+          The sample payload itself. Use real-looking values
+          (real names, plausible timestamps), not foo/bar.
+            id: 42
+            domain: example-net.com
+            status: active
+            created_at: 2026-02-14T09:30:00Z
+      - id: variants
+        title: "Variants"
+        required: false
+        format: yaml-block
+        guidance: |
+          Other shapes of the same fixture (minimal, maximal,
+          boundary). Each is a labelled override:
+            - label: minimal
+              overrides: {description: null, tags: []}
+    required_frontmatter:
+      - usage:
+          description: "Where the fixture is consumed"
+          llm_guidance: "test | smoke | seed | demo | docs-example."
+      - subject_kind:
+          description: "Type of artifact this fixture exemplifies"
+          llm_guidance: "entity | api-request | api-response | message | config."
+
+extends_field:
+  - name: usage
+    add_values: [test, smoke, seed, demo, docs-example]
+  - name: subject_kind
+    add_values: [entity, api-request, api-response, message, config]
+
+generator_hints:
+  fixture: |
+    Use realistic, deterministic data — same fixture must produce
+    same output across runs. Don't include secrets / PII; use clearly
+    fake but plausible values. Variants help cover boundary cases
+    without duplicating the whole fixture.

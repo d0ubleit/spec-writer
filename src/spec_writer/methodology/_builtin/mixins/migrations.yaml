@@ -1,0 +1,77 @@
+mixin: migrations
+description: |
+  L4 migration — a single data migration step. Two flavours:
+  schema-migration (DDL change on one store) and etl-pipeline (data
+  flowing between stores, e.g. PostgreSQL → ClickHouse). Codegen
+  emits alembic / clickhouse-migrations / Celery ETL tasks.
+
+adds_types:
+  - id: migration
+    layer_role: code-boundary
+    prefix: MIG
+    file_pattern: "migrations/{slug}-MIG-{number}.md"
+    up_to_types: [entity-schema, capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: source
+        title: "Source"
+        required: true
+        format: markdown
+        guidance: "What we read from / change from: store + entity-schema id + version."
+      - id: target
+        title: "Target"
+        required: true
+        format: markdown
+        guidance: "What we write to / change to: store + entity-schema id + version."
+      - id: operations
+        title: "Operations"
+        required: true
+        format: yaml-block
+        guidance: |
+          Ordered statements (schema flavour) OR transform pipeline (etl flavour):
+            schema:
+              - op: add_column
+                table: sites
+                column: clickhouse_synced_at
+                type: timestamptz
+            etl:
+              - extract: <query>
+              - transform: <rule>
+              - load: <target table>
+              - checkpoint: <key>
+      - id: reversibility
+        title: "Reversibility"
+        required: true
+        format: markdown
+        guidance: |
+          How to roll back. State "irreversible" explicitly if data is
+          destroyed. For ETL: idempotency strategy + replay semantics.
+      - id: data_guard
+        title: "Data guard"
+        required: false
+        format: markdown
+        guidance: "Preconditions, dry-run requirements, batch size, downtime window."
+    required_frontmatter:
+      - flavour:
+          description: "Migration kind"
+          llm_guidance: "schema-migration | etl-pipeline | data-backfill | seed."
+      - store:
+          description: "Primary store touched"
+          llm_guidance: "postgres | clickhouse | redis | s3 | filesystem."
+      - phase:
+          description: "Project phase this migration is in scope for"
+          llm_guidance: "mvp | stage-2 | stage-3."
+
+extends_field:
+  - name: flavour
+    add_values: [schema-migration, etl-pipeline, data-backfill, seed]
+
+generator_hints:
+  migration: |
+    Migrations are sequential — number them carefully via record_spec.
+    For ETL: always specify checkpoint key (so a re-run resumes,
+    doesn't duplicate). For schema: always pair forward + rollback
+    steps unless explicitly irreversible (then say so in reversibility).

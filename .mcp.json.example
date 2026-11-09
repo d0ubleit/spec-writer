@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sw-bridge": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "spec_writer.interface.agent_bridge"]
+    }
+  }
+}

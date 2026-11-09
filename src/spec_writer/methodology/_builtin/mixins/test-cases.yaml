@@ -1,0 +1,139 @@
+mixin: test-cases
+description: |
+  L4 test-case — a single executable test in Given/When/Then form.
+  First-class, atomic, many per project — TDD is the default
+  workflow for codegen, so tests are spec-level artifacts, not a
+  side note inside behavior.
+
+  One test-case references exactly one primary subject via up_to
+  (behavior / user-scenario / api-contract / async-job / ui-screen /
+  migration / integration-contract). Cross-cutting tests that
+  exercise several subjects may add `relates_to` for the supporting
+  ones.
+
+adds_types:
+  - id: test-case
+    layer_role: code-boundary
+    prefix: TC
+    file_pattern: "tests/{slug}-TC-{number}.md"
+    up_to_types:
+      - behavior
+      - user-scenario
+      - api-contract
+      - async-job
+      - ui-screen
+      - migration
+      - integration-contract
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "What's being verified, in one line."
+      - id: given
+        title: "Given"
+        required: true
+        format: markdown
+        guidance: |
+          Preconditions. Link fixture spec ids (e.g.
+          `Given fixture L4-FIX-007 loaded into the database`).
+          State auth context (actor, role).
+      - id: when
+        title: "When"
+        required: true
+        format: markdown
+        guidance: |
+          Single action under test:
+          `When operator POSTs /api/v1/sites with payload <ref to fixture>`.
+          User-scenario tests: reproduce the steps as a script.
+      - id: then
+        title: "Then"
+        required: true
+        format: yaml-block
+        guidance: |
+          Observable expectations:
+            - status_code: 201
+            - response_body_matches: {id: "*", domain: "example.com"}
+            - side_effect: row inserted into sites table
+            - emits_event: site.created
+      - id: fixtures
+        title: "Fixtures"
+        required: false
+        format: markdown
+        guidance: "Linked fixture spec ids and how they're applied."
+      - id: notes
+        title: "Notes"
+        required: false
+        format: markdown
+        guidance: "Flakiness mitigations, isolation requirements, environmental skip rules."
+    required_frontmatter:
+      - kind:
+          description: "Test flavour"
+          llm_guidance: |
+            unit | integration | contract | e2e | acceptance | smoke |
+            load | property | regression.
+            Choose by isolation:
+              unit         — no IO, function-level
+              integration  — DB/cache real, no network to third-party
+              contract     — schema check against integration-contract
+              e2e          — full UI stack (Playwright / Cypress)
+              acceptance   — user-scenario verbatim, e2e-flavoured
+              smoke        — minimal end-to-end after deploy
+              load         — perf budget verification
+              property     — generative / hypothesis-style
+              regression   — pinned to a prior incident
+      - runner:
+          description: "Test runner / framework"
+          llm_guidance: "pytest | jest | vitest | playwright | cypress | k6 | locust."
+      - severity:
+          description: "Blocker level if this test fails"
+          llm_guidance: "blocker | high | medium | low. Affects gate behaviour in CI."
+
+validators:
+  - id: test-case-up-to-matches-kind
+    on_type: test-case
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_test_case_kind_matches_subject
+  - id: test-case-id-unique
+    on_type: test-case
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_test_case_id_unique
+
+extends_field:
+  - name: kind
+    add_values:
+      - unit
+      - integration
+      - contract
+      - e2e
+      - acceptance
+      - smoke
+      - load
+      - property
+      - regression
+  - name: runner
+    add_values: [pytest, jest, vitest, playwright, cypress, k6, locust]
+  - name: severity
+    add_values: [blocker, high, medium, low]
+
+metrics:
+  - id: L3-behavior-test-coverage
+    layer: L3
+    func_ref: metrics.behavior_test_coverage_ratio
+    target: 0.9
+    warn_below: 0.6
+  - id: L3-scenario-test-coverage
+    layer: L3
+    func_ref: metrics.scenario_test_coverage_ratio
+    target: 0.9
+    warn_below: 0.6
+
+generator_hints:
+  test-case: |
+    TDD: write the test-case FIRST, then implement. Use Given/When/Then
+    explicitly — fuzzy "the system should work" assertions are forbidden.
+    Reference fixture ids instead of inlining test data. e2e and
+    acceptance tests must up_to a user-scenario; contract tests
+    must up_to an integration-contract.

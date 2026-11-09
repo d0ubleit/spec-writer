@@ -1,0 +1,71 @@
+mixin: state-machines
+description: |
+  L4 state-machine — explicit lifecycle for a domain entity (site,
+  deployment, form/profile, historical-url). Codegen produces enum +
+  transition guards + persistence helpers from this spec.
+
+adds_types:
+  - id: state-machine
+    layer_role: code-boundary
+    prefix: SM
+    file_pattern: "state-machines/{slug}-SM-{number}.md"
+    up_to_types: [entity-schema, capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: subject
+        title: "Subject"
+        required: true
+        format: markdown
+        guidance: "Which entity-schema field carries the state value; default value at creation."
+      - id: states
+        title: "States"
+        required: true
+        format: yaml-block
+        guidance: |
+          List of states with terminal/initial markers:
+            - id: draft
+              initial: true
+              description: <one line>
+            - id: published
+              terminal: false
+            - id: archived
+              terminal: true
+      - id: transitions
+        title: "Transitions"
+        required: true
+        format: yaml-block
+        guidance: |
+          Allowed moves:
+            - from: draft
+              to: review
+              trigger: submit_for_review
+              guard: <optional condition>
+              actor: <role or "system">
+              side_effects: <bullets>
+      - id: invariants
+        title: "Invariants"
+        required: false
+        format: markdown
+        guidance: "Cross-state constraints (uniqueness, ordering, ttl)."
+    required_frontmatter:
+      - subject_entity:
+          description: "entity-schema spec id whose lifecycle this is"
+          llm_guidance: "Must reference an existing entity-schema (e.g. L4-ENT-003)."
+
+validators:
+  - id: state-machine-reachability
+    on_type: state-machine
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_state_machine_reachability
+
+generator_hints:
+  state-machine: |
+    One state-machine per entity that has a lifecycle. Every non-
+    terminal state must have at least one outgoing transition; every
+    non-initial state must be reachable from the initial state. If
+    the source doc lists statuses informally, formalise the graph and
+    confirm via ask_user when ambiguous.

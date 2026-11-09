@@ -1,0 +1,86 @@
+mixin: integration-contracts
+description: |
+  L4 integration-contract — a contract on an EXTERNAL system we
+  consume (third-party CMS REST API, partner data feed, payments
+  gateway, mail/SMS provider, file-storage service). Different from
+  api-contract (which is OUR endpoints) — here we are the client,
+  the other side dictates the shape.
+
+adds_types:
+  - id: integration-contract
+    layer_role: code-boundary
+    prefix: INT
+    file_pattern: "integrations/{slug}-INT-{number}.md"
+    up_to_types: [capability, behavior]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: provider
+        title: "Provider"
+        required: true
+        format: markdown
+        guidance: "Owner system, version pin, docs link, ownership."
+      - id: endpoints
+        title: "Endpoints"
+        required: true
+        format: yaml-block
+        guidance: |
+          List of operations we call:
+            - op: get_domains
+              method: GET
+              path: /api/domains
+              auth: bearer-token
+              request: {schema}
+              response: {schema}
+      - id: auth
+        title: "Auth"
+        required: true
+        format: markdown
+        guidance: "How we authenticate: token kind, rotation policy, secret store."
+      - id: failure_modes
+        title: "Failure modes"
+        required: true
+        format: markdown
+        guidance: |
+          Known failures + our handling: timeout, 4xx, 5xx, schema
+          drift, rate limit. State retry policy + circuit-breaker.
+      - id: data_constraints
+        title: "Data constraints"
+        required: false
+        format: markdown
+        guidance: "Rate limits, payload size caps, allowed regions, quotas."
+    required_frontmatter:
+      - system:
+          description: "External system identifier"
+          llm_guidance: |
+            Stable kebab-case slug naming the external system,
+            e.g. payments-gateway, mail-provider, partner-feed.
+            Reused as the prefix in operation names.
+      - protocol:
+          description: "Wire protocol"
+          llm_guidance: "rest | rpc | webhook | graphql | message-queue | file-sync."
+      - direction:
+          description: "Data flow"
+          llm_guidance: "outbound (we call them) | inbound (they call us) | bidirectional."
+      - roles:
+          description: "Roles whose actions may trigger this integration"
+          llm_guidance: |
+            List of role ids defined in the rbac-matrix. Use ["system"]
+            for outbound calls triggered only by scheduled / system
+            jobs. For inbound webhooks, list ["external"] and document
+            the calling party in the auth section.
+
+extends_field:
+  - name: protocol
+    add_values: [rest, rpc, webhook, graphql, message-queue, file-sync]
+  - name: direction
+    add_values: [outbound, inbound, bidirectional]
+
+generator_hints:
+  integration-contract: |
+    Don't paraphrase the external API; capture exactly what we depend
+    on. If the provider's contract changes, this spec is the single
+    place we update. Always document at least one failure mode — the
+    integration WILL fail, and downstream code must know how.

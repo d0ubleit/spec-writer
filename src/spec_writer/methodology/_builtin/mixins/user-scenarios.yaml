@@ -1,0 +1,83 @@
+mixin: user-scenarios
+description: |
+  L3 user-scenario — end-to-end user journey through the UI. Differs
+  from `behavior` (which describes system HOW) by tracking the actor
+  navigating screens and interacting with concrete components.
+
+  Hard-bound to UI: every step references a ui-screen and (optionally)
+  a ui-component, so codegen can wire screen flows + e2e tests without
+  guessing selectors.
+
+adds_types:
+  - id: user-scenario
+    layer: L3
+    prefix: USC
+    file_pattern: "user-scenarios/{slug}-USC-{number}.md"
+    up_to_types: [capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "One-paragraph user story: as <actor> I want <outcome> so <value>."
+      - id: actor
+        title: "Actor"
+        required: true
+        format: markdown
+        guidance: "Single role from rbac-matrix actor set."
+      - id: preconditions
+        title: "Preconditions"
+        required: false
+        format: markdown
+        guidance: "What must be true before the journey starts (auth, data state)."
+      - id: steps
+        title: "Steps"
+        required: true
+        format: yaml-block
+        guidance: |
+          Ordered list of steps. Each step is a yaml block with:
+            - step: <int>
+              screen: <ui-screen spec id, e.g. L4-SCR-007>
+              action: <"click" | "fill" | "navigate" | "observe" | "wait">
+              component: <ui-component spec id, optional>
+              expects: <free-text observable outcome>
+          Use observe/wait when no UI input occurs.
+      - id: postconditions
+        title: "Postconditions"
+        required: true
+        format: markdown
+        guidance: "Observable end state after the journey (data, screen, audit log)."
+      - id: error_paths
+        title: "Error paths"
+        required: false
+        format: markdown
+        guidance: "Alternative flows: validation errors, abort, retry."
+    required_frontmatter:
+      - actor:
+          description: "Primary role driving the scenario"
+          llm_guidance: "Single value from the project's defined roles."
+      - story_id:
+          description: "External user-story id"
+          llm_guidance: "Cross-reference into product backlog (e.g. US-01)."
+
+validators:
+  - id: scenario-steps-linked
+    on_type: user-scenario
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_scenario_steps_linked
+
+metrics:
+  - id: L3-scenario-step-linkage
+    layer: L3
+    func_ref: metrics.scenario_step_linkage_ratio
+    target: 1.0
+    warn_below: 0.7
+
+generator_hints:
+  user-scenario: |
+    Scenarios are user-perspective, not system-perspective. Each step
+    must reference a real ui-screen id; if the screen doesn't exist
+    yet, ask the user or record a stub ui-screen first via record_spec.
+    Don't invent screens. Keep steps observable — "user sees X" not
+    "system computes Y".

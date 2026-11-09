@@ -1,0 +1,95 @@
+mixin: ui-screens
+description: |
+  L4 ui-screen — a single user-facing screen / page in the admin UI.
+  Atomic, code-boundary. One file per route.
+
+  Contains layout intent, states, data dependencies and the API calls
+  triggered from this screen. Codegen emits a page component + state
+  machine + API wiring directly from this spec.
+
+adds_types:
+  - id: ui-screen
+    layer_role: code-boundary
+    prefix: SCR
+    file_pattern: "ui/screens/{slug}-SCR-{number}.md"
+    up_to_types: [capability, behavior, user-scenario]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: layout
+        title: "Layout"
+        required: true
+        format: markdown
+        guidance: |
+          Region-level breakdown: header / sidebar / main / footer.
+          Reference ui-component ids for reusable pieces. Don't draw
+          ASCII — describe regions and what lives in each.
+      - id: data_dependencies
+        title: "Data dependencies"
+        required: true
+        format: yaml-block
+        guidance: |
+          List entities / api-contracts the screen reads & writes:
+            reads:
+              - entity: <entity-schema id>
+              - api: <api-contract id, method+path>
+            writes:
+              - api: <api-contract id>
+      - id: states
+        title: "States"
+        required: true
+        format: markdown
+        guidance: |
+          Enumerate UI states with their visible content:
+            - empty (no data)
+            - loading
+            - populated
+            - error (per error class)
+            - permission-denied
+      - id: actions
+        title: "Actions"
+        required: true
+        format: yaml-block
+        guidance: |
+          User-initiated actions and the API calls they trigger:
+            - name: create_site
+              component: <ui-component id, e.g. L4-CMP-014>
+              calls: <api-contract id>
+              on_success: <screen transition or refresh>
+              on_failure: <error state>
+      - id: navigation
+        title: "Navigation"
+        required: false
+        format: markdown
+        guidance: "Inbound routes (where users arrive from) and outbound (where actions lead)."
+    required_frontmatter:
+      - route:
+          description: "URL path served by this screen"
+          llm_guidance: "Absolute path, e.g. /admin/sites or /admin/sites/{id}/deploy. Must be unique across ui-screens."
+      - layout_kind:
+          description: "Layout archetype"
+          llm_guidance: "list | detail | form | wizard | dashboard | modal-host."
+      - roles:
+          description: "Roles allowed to access this screen"
+          llm_guidance: "List of role ids defined in the rbac-matrix. Empty list is forbidden — public screens use ['anonymous']."
+
+validators:
+  - id: ui-screen-route-unique
+    on_type: ui-screen
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_ui_screen_routes_unique
+
+extends_field:
+  - name: layout_kind
+    add_values: [list, detail, form, wizard, dashboard, modal-host]
+
+generator_hints:
+  ui-screen: |
+    A ui-screen is the codegen unit for one route. Always link to the
+    entity-schemas it reads/writes and the api-contracts it calls —
+    don't paraphrase, use ids. If you need a brand-new component, drop
+    a stub ui-component first via record_spec, then reference it.
+    States are non-negotiable: empty + loading + error + populated.

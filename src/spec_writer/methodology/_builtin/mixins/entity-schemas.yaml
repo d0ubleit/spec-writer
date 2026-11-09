@@ -1,0 +1,45 @@
+mixin: entity-schemas
+description: |
+  L4 entity-schema — persistent data entity definitions. Code-boundary,
+  atomic. Lives in technical/entities/.
+
+adds_types:
+  - id: entity-schema
+    layer_role: code-boundary
+    prefix: ENT
+    file_pattern: "entities/{slug}-ENT-{number}.md"
+    up_to_types: [capability, behavior]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: schema
+        title: "Schema"
+        required: true
+        format: yaml-block
+        guidance: |
+          Field list with types, constraints, defaults. Codegen
+          produces models / migrations from this block.
+      - id: invariants
+        title: "Invariants"
+        required: false
+        format: markdown
+      - id: simple_lifecycle
+        title: "Simple lifecycle"
+        required: false
+        format: markdown
+        guidance: |
+          Trivial state ladders that don't need a full state-machine
+          spec: `draft → published → archived`, `active → deleted`.
+          List the states + when transitions happen. If guards,
+          side effects, or reachability matter, drop a real
+          state-machine spec instead and remove this section.
+
+generator_hints:
+  entity-schema: |
+    L4 entity-schema is the SoT for a domain object. Keep fields
+    typed, list invariants explicitly. Multiple behaviors/capabilities
+    can reference the same entity via up_to. For lifecycles: trivial
+    ladders go in `simple_lifecycle`; non-trivial (guards, side
+    effects, branching) require a separate state-machine spec.

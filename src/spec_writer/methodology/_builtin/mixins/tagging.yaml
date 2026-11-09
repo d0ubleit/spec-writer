@@ -1,0 +1,13 @@
+mixin: tagging
+description: |
+  Cross-cutting: every spec type gains a required `tags` frontmatter
+  field. Tags drive search, scope filters, and refine targeting.
+
+extends_all_types:
+  required_frontmatter:
+    - tags:
+        description: "Topic tags categorizing this spec"
+        llm_guidance: |
+          1-5 short lowercase kebab-case identifiers (e.g. "auth",
+          "billing", "observability"). Reuse existing tags from the
+          corpus where applicable.

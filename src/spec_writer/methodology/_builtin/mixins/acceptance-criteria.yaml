@@ -1,0 +1,22 @@
+mixin: acceptance-criteria
+description: |
+  Adds 'Acceptance Criteria' and 'Error Paths' sections to behavior
+  specs. Section-mode mixin — extends existing behavior type.
+
+extends_types:
+  - id: behavior
+    add_sections:
+      - id: acceptance_criteria
+        title: "Acceptance Criteria"
+        required: true
+        format: markdown
+        guidance: |
+          Concrete observable outcomes. Include numeric thresholds
+          where applicable (p95 latency < 300ms, max payload 5 MB).
+      - id: error_paths
+        title: "Error Paths"
+        required: false
+        format: markdown
+        guidance: |
+          Each error mode + the system response (status code, error
+          code, side effects).

@@ -1,0 +1,62 @@
+mixin: conventions
+description: |
+  L4 convention — one project coding/API/UI style rule. Atomic so
+  the codegen agent can cite the rule directly when emitting code.
+  Examples: "All JSON keys are snake_case", "Migration files
+  numbered 0001_<verb>_<object>.py", "List endpoints return
+  {items, total, next_cursor}".
+
+adds_types:
+  - id: convention
+    layer_role: code-boundary
+    prefix: CONV
+    cross_cutting: true
+    file_pattern: "conventions/{slug}-CONV-{number}.md"
+    up_to_types: [capability, vision]
+    sections:
+      - id: rule
+        title: "Rule"
+        required: true
+        format: markdown
+        guidance: "Single declarative sentence. 'X MUST be Y.' Avoid ambiguity."
+      - id: rationale
+        title: "Rationale"
+        required: true
+        format: markdown
+        guidance: "Why this convention; what it prevents."
+      - id: examples
+        title: "Examples"
+        required: true
+        format: markdown
+        guidance: |
+          Good and bad examples side by side:
+            ✓ user_id, created_at
+            ✗ userID, createdAt
+      - id: exceptions
+        title: "Exceptions"
+        required: false
+        format: markdown
+        guidance: "Where the rule does not apply (third-party APIs, legacy modules)."
+    required_frontmatter:
+      - scope:
+          description: "Where the convention applies"
+          llm_guidance: |
+            backend-code | frontend-code | api-shape | database |
+            tests | infra | docs | all.
+      - enforcer:
+          description: "How compliance is checked"
+          llm_guidance: |
+            linter | formatter | type-checker | code-review | runtime-validator.
+
+extends_field:
+  - name: scope
+    add_values: [backend-code, frontend-code, api-shape, database, tests, infra, docs, all]
+  - name: enforcer
+    add_values: [linter, formatter, type-checker, code-review, runtime-validator]
+
+generator_hints:
+  convention: |
+    One rule = one spec. Don't bundle ("snake_case keys AND no
+    trailing slashes"). Conventions are referenced by other specs;
+    keeping them atomic means deprecating one doesn't drag others
+    along.

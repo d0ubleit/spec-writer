@@ -1,0 +1,37 @@
+mixin: behaviors
+description: |
+  L3 behaviors — concrete scenarios with actors, triggers, flows,
+  acceptance criteria, error paths. Middle layer, decomposes L2
+  capabilities into specific HOW.
+
+adds_types:
+  - id: behavior
+    layer_name: behaviors
+    prefix: BHV
+    file_pattern: "{slug}-BHV-{number}.md"
+    up_to_types: [capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: actor_trigger
+        title: "Actor + Trigger"
+        required: true
+        format: markdown
+        guidance: "Who initiates this behavior and under what condition."
+      - id: preconditions
+        title: "Preconditions"
+        required: false
+        format: markdown
+      - id: main_flow
+        title: "Main flow"
+        required: true
+        format: markdown
+        guidance: "Ordered list of steps the system takes."
+
+generator_hints:
+  behavior: |
+    L3 behavior describes HOW one capability is realized. Concrete
+    numbers (latencies, sizes) live here, not on L2. One behavior =
+    one user-visible scenario.

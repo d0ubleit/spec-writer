@@ -1,0 +1,70 @@
+mixin: requirements-traceability
+description: |
+  Cross-cutting: adds `traces_to` (functional/non-functional req ids)
+  and `priority` (MoSCoW) to every spec type. Also extends `vision`
+  with an optional "Principles" section so project-wide development
+  principles (e.g. "scale > per-site polish") have a home.
+
+  Without this mixin, there is no way to answer "which FR-XX is not
+  covered yet?" or "what's the Must Have surface vs Should?".
+
+extends_all_types:
+  optional_frontmatter:
+    - traces_to:
+        description: "External requirement ids covered by this spec"
+        llm_guidance: |
+          List of source-doc requirement identifiers — e.g.
+          ["FR-12", "FR-15", "NFR-04"]. Lets coverage validators
+          answer "which requirement has no covering spec yet?".
+    - priority:
+        description: "MoSCoW priority within the assigned phase"
+        llm_guidance: |
+          must | should | could | wont. Orthogonal to `phase`:
+          `phase=mvp, priority=should` means a Should-have within
+          the MVP phase. Default 'must' when unstated.
+
+extends_types:
+  - id: vision
+    add_optional_frontmatter:
+      - principles:
+          description: "Top-level project principles overriding defaults"
+          llm_guidance: "Short list of slogans, e.g. ['scale > polish', 'managed > automated']."
+    add_sections:
+      - id: principles
+        title: "Principles"
+        required: false
+        format: markdown
+        guidance: |
+          Project-wide development principles that override
+          standard defaults. Example: "Uniqueness — strive for, but
+          not absolute" or "Scale + manageability > per-site quality".
+          Generators consult this section when trade-offs come up.
+
+validators:
+  - id: traces-to-format
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_traces_to_format
+
+extends_field:
+  - name: priority
+    add_values: [must, should, could, wont]
+
+metrics:
+  - id: L2-priority-tagged
+    layer: L2
+    func_ref: metrics.priority_tagged_ratio
+    target: 0.8
+    warn_below: 0.5
+  - id: L3-priority-tagged
+    layer: L3
+    func_ref: metrics.priority_tagged_ratio
+    target: 0.8
+    warn_below: 0.5
+
+generator_hints:
+  "*": |
+    Whenever a spec descends from a numbered requirement (FR-XX,
+    NFR-XX, US-XX), record the id(s) in `traces_to`. This is how
+    we prove coverage. `priority` reflects MoSCoW within the
+    current phase, not against project total.

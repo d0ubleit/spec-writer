@@ -1,0 +1,104 @@
+mixin: tech-stack
+description: |
+  L4 tech-choice — one technology decision (language, framework,
+  database, queue, proxy, container, monitoring tool, ...). Atomic
+  so the agent can query "which database is chosen?" without parsing
+  a megaspec, and so each technology has its own history (status
+  transitions chosen → deprecated → superseded).
+
+adds_types:
+  - id: tech-choice
+    layer_role: code-boundary
+    prefix: TECH
+    file_pattern: "tech-stack/{slug}-TECH-{number}.md"
+    up_to_types: [capability, arch-view, vision]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "What role this technology fills in the system."
+      - id: choice
+        title: "Choice"
+        required: true
+        format: yaml-block
+        guidance: |
+          The picked technology:
+            name: <official name>
+            version: <pin or range>
+            license: <SPDX id, e.g. MIT, Apache-2.0, GPL-2.0+>
+            docs_url: <canonical docs link>
+      - id: rationale
+        title: "Rationale"
+        required: true
+        format: markdown
+        guidance: "Why this technology — fit, ecosystem, team, prior art."
+      - id: alternatives
+        title: "Alternatives considered"
+        required: false
+        format: markdown
+        guidance: |
+          Other options evaluated + why not picked. List explicit
+          trade-offs (operational cost, license, lock-in, perf).
+      - id: constraints
+        title: "Constraints & implications"
+        required: false
+        format: markdown
+        guidance: "Version pins, license obligations, OS requirements, operational footprint, deprecation timeline."
+    required_frontmatter:
+      - category:
+          description: "Technology category — one per category may be 'chosen' at a time"
+          llm_guidance: |
+            backend-language | backend-framework | frontend-language | frontend-framework |
+            state-management | http-client | ui-library | database | analytics-store |
+            cache | queue | reverse-proxy | container | ci-cd | monitoring | logging |
+            analytics | cms | ssl | dns | template-engine | other.
+      - phase:
+          description: "Project phase this choice applies to"
+          llm_guidance: "mvp | stage-2 | stage-3."
+      - status:
+          description: "Decision status"
+          llm_guidance: "chosen | considered | rejected | deprecated | superseded."
+
+validators:
+  - id: tech-choice-uniqueness-per-category
+    on_type: tech-choice
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_tech_choice_uniqueness_per_category
+
+extends_field:
+  - name: category
+    add_values:
+      - backend-language
+      - backend-framework
+      - frontend-language
+      - frontend-framework
+      - state-management
+      - http-client
+      - ui-library
+      - database
+      - analytics-store
+      - cache
+      - queue
+      - reverse-proxy
+      - container
+      - ci-cd
+      - monitoring
+      - logging
+      - analytics
+      - cms
+      - ssl
+      - dns
+      - template-engine
+      - other
+  - name: status
+    add_values: [chosen, considered, rejected, deprecated, superseded]
+
+generator_hints:
+  tech-choice: |
+    One choice = one spec. If the source doc says "FastAPI or Django"
+    (no decision yet), write TWO specs with status: considered and
+    propose a tiebreaker via ask_user. Don't pre-pick. When phase is
+    stage-2 or stage-3, status can be 'chosen' early — that's fine,
+    just clear about phase.

@@ -1,0 +1,77 @@
+mixin: glossary
+description: |
+  L1 term — a single project term. Domain noun, acronym, role or
+  concept. Atomic so each term has its own history (status, aliases,
+  language). Source-boundary layer: lives next to `vision`.
+
+  Why a first-class type: source documents may be multilingual; the
+  generated corpus must be English (principle 8). Without a glossary
+  the agent re-translates a foreign-language domain noun differently
+  on each pass — sometimes "form", sometimes "profile", sometimes
+  "card". Pin the canonical term once.
+
+adds_types:
+  - id: term
+    layer_role: source-boundary
+    prefix: TERM
+    file_pattern: "glossary/{slug}-TERM-{number}.md"
+    sections:
+      - id: definition
+        title: "Definition"
+        required: true
+        format: markdown
+        guidance: "One precise sentence. Avoid recursion (don't define X using X)."
+      - id: usage
+        title: "Usage"
+        required: false
+        format: markdown
+        guidance: "Where this term appears (capabilities, behaviors, integrations)."
+      - id: avoid_confusion
+        title: "Avoid confusion with"
+        required: false
+        format: markdown
+        guidance: |
+          Paired terms that sound similar. State the discriminator
+          (e.g. "customer vs user: customer pays for the account;
+          user is anyone authenticated under it — staff included").
+      - id: examples
+        title: "Examples"
+        required: false
+        format: markdown
+    required_frontmatter:
+      - kind:
+          description: "Term flavour"
+          llm_guidance: "domain-noun | acronym | role | concept | external-system."
+      - canonical:
+          description: "Canonical English spelling used everywhere in the corpus"
+          llm_guidance: |
+            Single canonical form. Other languages / synonyms go in
+            `aliases` (optional). E.g. canonical: 'customer';
+            aliases: ['клиент', 'buyer', 'account-holder'].
+    optional_frontmatter:
+      - aliases:
+          description: "Synonyms and source-language equivalents"
+          llm_guidance: "List of strings. Validators check that aliases don't collide across terms."
+
+validators:
+  - id: glossary-canonical-unique
+    on_type: term
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_glossary_canonical_unique
+  - id: glossary-aliases-unique
+    on_type: term
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_glossary_aliases_unique
+
+extends_field:
+  - name: kind
+    add_values: [domain-noun, acronym, role, concept, external-system]
+
+generator_hints:
+  term: |
+    One spec per concept, not per language. Define in English, list
+    foreign-language aliases. When two terms are easily confused
+    (customer / user, order / cart), fill `avoid_confusion` — that's
+    where the value comes from.

@@ -1,0 +1,75 @@
+mixin: auth-flow
+description: |
+  L4 auth-flow — one authentication / authorization flow with full
+  lifecycle: token issuance, validity, refresh, revocation. Separate
+  from api-contract because flows span several endpoints and have
+  their own security considerations.
+
+adds_types:
+  - id: auth-flow
+    layer_role: code-boundary
+    prefix: AUTH
+    file_pattern: "auth/{slug}-AUTH-{number}.md"
+    up_to_types: [capability, behavior]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: flow
+        title: "Flow"
+        required: true
+        format: yaml-block
+        guidance: |
+          Ordered steps of the auth dance:
+            - step: 1
+              actor: user-agent | server | auth-service
+              action: POST /auth/login
+              produces: <token-kind>
+              consumes: <token-kind, optional>
+      - id: token_lifecycle
+        title: "Token lifecycle"
+        required: true
+        format: yaml-block
+        guidance: |
+          Per-token-kind validity rules:
+            access_token:
+              ttl_seconds: 3600
+              refreshable: true
+              storage: client-memory
+              revocable: false
+            refresh_token:
+              ttl_seconds: 2592000
+              refreshable: false
+              storage: http-only-cookie
+              revocable: true
+      - id: failure_modes
+        title: "Failure modes"
+        required: true
+        format: markdown
+        guidance: "Expired / invalid / revoked / replayed. State system behaviour for each."
+      - id: security_notes
+        title: "Security notes"
+        required: false
+        format: markdown
+        guidance: "Threat model concerns: CSRF, XSS, token theft, replay, downgrade."
+    required_frontmatter:
+      - scheme:
+          description: "Auth scheme"
+          llm_guidance: "jwt | oauth2 | session | api-key | basic | mtls."
+      - use_case:
+          description: "Which problem the flow solves"
+          llm_guidance: "web-login | api-token | service-to-service | refresh | logout | sso."
+
+extends_field:
+  - name: scheme
+    add_values: [jwt, oauth2, session, api-key, basic, mtls]
+  - name: use_case
+    add_values: [web-login, api-token, service-to-service, refresh, logout, sso]
+
+generator_hints:
+  auth-flow: |
+    One flow = one spec. Web-login and refresh are separate flows
+    even if they share token storage — they have different actors
+    and failure modes. Always document revocation; without it, a
+    compromised token lives until natural expiry.

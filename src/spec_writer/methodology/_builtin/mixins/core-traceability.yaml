@@ -1,0 +1,67 @@
+mixin: core-traceability
+description: |
+  Always-on validators. Traceability (pyramid adjacency, bidirectional
+  symmetry, dangling-ref), English-only output, and structural
+  completeness (required sections + required frontmatter fields).
+
+validators:
+  - id: pyramid-adjacency
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_pyramid_adjacency
+  - id: dangling-ref
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_dangling_refs
+  - id: vertical-symmetry
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_vertical_symmetry
+  - id: english-output
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_english_output
+  - id: required-sections
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_required_sections
+  - id: required-frontmatter
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_required_frontmatter
+  - id: surface-when-missing
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_surface_when_missing
+
+metrics:
+  - id: L2-up-to-completeness
+    layer: L2
+    func_ref: metrics.up_to_completeness_ratio
+    target: 1.0
+    warn_below: 0.8
+  - id: L3-up-to-completeness
+    layer: L3
+    func_ref: metrics.up_to_completeness_ratio
+    target: 1.0
+    warn_below: 0.8
+  - id: L4-up-to-completeness
+    layer: L4
+    func_ref: metrics.up_to_completeness_ratio
+    target: 1.0
+    warn_below: 0.8
+  - id: L2-required-frontmatter
+    layer: L2
+    func_ref: metrics.required_frontmatter_ratio
+    target: 1.0
+    warn_below: 0.8
+  - id: L3-required-frontmatter
+    layer: L3
+    func_ref: metrics.required_frontmatter_ratio
+    target: 1.0
+    warn_below: 0.8
+  - id: L4-required-frontmatter
+    layer: L4
+    func_ref: metrics.required_frontmatter_ratio
+    target: 1.0
+    warn_below: 0.8

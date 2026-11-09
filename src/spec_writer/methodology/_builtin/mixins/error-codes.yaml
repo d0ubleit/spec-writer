@@ -1,0 +1,82 @@
+mixin: error-codes
+description: |
+  L4 error-code — one error in the project taxonomy. Atomic so the
+  codegen agent emits the same machine-readable shape everywhere
+  (no SITE_DUPLICATE in one endpoint and DUPLICATE_SITE in another).
+
+adds_types:
+  - id: error-code
+    layer_role: code-boundary
+    prefix: ERR
+    file_pattern: "errors/{slug}-ERR-{number}.md"
+    up_to_types: [capability, behavior, api-contract]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: when_raised
+        title: "When raised"
+        required: true
+        format: markdown
+        guidance: "Concrete conditions. Reference api-contract / behavior / async-job ids."
+      - id: response_shape
+        title: "Response shape"
+        required: true
+        format: yaml-block
+        guidance: |
+          The wire format clients see:
+            code: SITE_ALREADY_EXISTS
+            message: "Site with this domain is already registered"
+            details: {field: domain}
+      - id: recovery_hint
+        title: "Recovery hint"
+        required: false
+        format: markdown
+        guidance: "What the caller should do next: retry, choose another value, contact support."
+    required_frontmatter:
+      - code:
+          description: "Machine-readable error identifier"
+          llm_guidance: |
+            UPPER_SNAKE_CASE, unique across the project. E.g.
+            SITE_ALREADY_EXISTS, DOMAIN_BLACKLISTED, IMPORT_PARSING_FAILED.
+      - http_status:
+          description: "Associated HTTP status (for API-surface errors)"
+          llm_guidance: "Integer 400-599. Use '0' for non-HTTP errors (queue / internal)."
+      - category:
+          description: "Error category"
+          llm_guidance: |
+            validation | conflict | not-found | unauthorized | forbidden |
+            rate-limited | server-error | external-dependency | timeout.
+
+validators:
+  - id: error-code-uniqueness
+    on_type: error-code
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_error_code_uniqueness
+  - id: error-code-http-status-valid
+    on_type: error-code
+    scope: per-spec
+    rule_kind: python
+    func_ref: validators.check_error_code_http_status
+
+extends_field:
+  - name: category
+    add_values:
+      - validation
+      - conflict
+      - not-found
+      - unauthorized
+      - forbidden
+      - rate-limited
+      - server-error
+      - external-dependency
+      - timeout
+
+generator_hints:
+  error-code: |
+    One error = one spec. Define once, reference from many
+    api-contract / async-job specs. Keep `code` STABLE — clients
+    rely on it. To deprecate a code, set status=deprecated and add
+    a successor in `relates_to` (kind=supersedes).

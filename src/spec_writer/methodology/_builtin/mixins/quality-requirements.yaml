@@ -1,0 +1,74 @@
+mixin: quality-requirements
+description: |
+  L3 quality-req — atomic non-functional requirement. One NFR per spec
+  (NFR-01..NFR-N from source docs). Each has a measurable target and a
+  measurement method, so codegen / validation can verify it.
+
+adds_types:
+  - id: quality-req
+    layer: L3
+    prefix: QR
+    file_pattern: "quality/{slug}-QR-{number}.md"
+    up_to_types: [capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+        guidance: "Why this NFR matters; the risk it mitigates."
+      - id: target
+        title: "Target"
+        required: true
+        format: yaml-block
+        guidance: |
+          Numeric or boolean target. Examples:
+            metric: latency_p95_ms
+            value: 500
+            unit: ms
+            scope: api-control-plane
+      - id: measurement
+        title: "Measurement"
+        required: true
+        format: markdown
+        guidance: "How we verify: instrument, load test, audit, dashboard, smoke test."
+      - id: applies_to
+        title: "Applies to"
+        required: false
+        format: markdown
+        guidance: "Specific capability ids / behavior ids / api-contracts in scope."
+      - id: violations
+        title: "Violation handling"
+        required: false
+        format: markdown
+        guidance: "What we do if breached: alert, throttle, escalate, rollback."
+    required_frontmatter:
+      - category:
+          description: "NFR category"
+          llm_guidance: "performance | security | reliability | scalability | anti-footprint | maintainability | compliance | usability."
+      - source_id:
+          description: "External NFR identifier"
+          llm_guidance: "Cross-reference into source docs (e.g. NFR-04)."
+      - phase:
+          description: "Project phase this NFR is in scope for"
+          llm_guidance: "mvp | stage-2 | stage-3."
+
+extends_field:
+  - name: phase
+    add_values: [mvp, stage-2, stage-3]
+  - name: category
+    add_values:
+      - performance
+      - security
+      - reliability
+      - scalability
+      - anti-footprint
+      - maintainability
+      - compliance
+      - usability
+
+generator_hints:
+  quality-req: |
+    One NFR = one spec. Always include a numeric target where possible
+    (don't write "fast" — write "p95 < 500ms"). If the source doc is
+    vague, propose a target via ask_user before recording. Phase is
+    important: don't mark stage-3 NFRs as mvp.

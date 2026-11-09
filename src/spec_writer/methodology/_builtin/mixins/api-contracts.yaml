@@ -1,0 +1,52 @@
+mixin: api-contracts
+description: |
+  L4 api-contract — HTTP endpoint contracts. Code-boundary, atomic
+  mode. One file per endpoint. Lives in technical/api/.
+
+adds_types:
+  - id: api-contract
+    layer_role: code-boundary
+    prefix: API
+    file_pattern: "api/{slug}-API-{number}.md"
+    up_to_types: [behavior]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: contract
+        title: "Contract"
+        required: true
+        format: yaml-block
+        guidance: |
+          Machine-readable endpoint schema (method, path, request body,
+          responses, auth). The codegen agent reads this to emit code.
+      - id: acceptance
+        title: "Acceptance"
+        required: true
+        format: markdown
+    required_frontmatter:
+      - method:
+          description: "HTTP method"
+          llm_guidance: "One of GET/POST/PUT/PATCH/DELETE."
+      - path:
+          description: "URL path with parameters"
+          llm_guidance: "Use {paramName} for path params, e.g. /users/{id}."
+      - auth:
+          description: "Authentication requirement"
+          llm_guidance: "anonymous | authenticated | role-based."
+      - roles:
+          description: "Roles allowed to call this endpoint"
+          llm_guidance: |
+            List of role ids defined in the rbac-matrix. Use ["anonymous"]
+            for public endpoints. Empty list is forbidden. When auth is
+            anonymous, roles is ["anonymous"]; when role-based, list the
+            allowed roles explicitly. Validated cross-spec against
+            rbac-matrix when that mixin is active.
+
+generator_hints:
+  api-contract: |
+    L4 api-contract is the codegen contract. Be deterministic — same
+    L3 behavior should yield the same endpoint contract. Body is
+    machine-readable YAML in the Contract section; sibling fields
+    (method, path, auth) live in frontmatter for quick scanning.

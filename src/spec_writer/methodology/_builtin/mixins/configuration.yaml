@@ -1,0 +1,73 @@
+mixin: configuration
+description: |
+  L4 configuration — one config namespace (env vars + feature flags
+  + secrets) for one deployable subsystem. Codegen emits settings
+  classes / Pydantic Settings / dotenv templates from this spec.
+
+adds_types:
+  - id: configuration
+    layer_role: code-boundary
+    prefix: CFG
+    file_pattern: "configuration/{slug}-CFG-{number}.md"
+    up_to_types: [capability, deployment-topology, tech-choice]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: keys
+        title: "Keys"
+        required: true
+        format: yaml-block
+        guidance: |
+          Configuration entries:
+            - key: DATABASE_URL
+              type: str
+              required: true
+              secret: true
+              default: ~
+              description: "Primary database DSN"
+              valid_values: ~
+            - key: FEATURE_NEW_PIPELINE
+              type: bool
+              required: false
+              default: false
+              description: "Enable the new processing pipeline"
+      - id: source_strategy
+        title: "Source strategy"
+        required: true
+        format: markdown
+        guidance: |
+          Where each key is read from (env / yaml / feature-flag service
+          / vault) and the precedence order. State whether keys can be
+          changed at runtime or require restart.
+      - id: examples
+        title: "Examples"
+        required: false
+        format: markdown
+        guidance: "Sample dev / prod overlays."
+    required_frontmatter:
+      - namespace:
+          description: "Configuration namespace"
+          llm_guidance: |
+            Stable slug naming the subsystem this config belongs to,
+            e.g. app, worker, web, frontend, primary-db, cache. One
+            configuration spec per namespace.
+      - changeable_at_runtime:
+          description: "Whether changes apply without restart"
+          llm_guidance: "true | false. true requires hot-reload or feature-flag plumbing."
+
+validators:
+  - id: configuration-namespace-unique
+    on_type: configuration
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_configuration_namespace_unique
+
+generator_hints:
+  configuration: |
+    One namespace per spec. Keep secret keys flagged — codegen
+    suppresses them from logs and docs. If a key is feature-flag
+    style (bool toggle), prefer `changeable_at_runtime: true` and
+    document the source-of-truth service. Don't bury defaults; if a
+    key has no default and isn't required, that's a smell.

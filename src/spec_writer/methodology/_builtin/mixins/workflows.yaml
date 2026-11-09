@@ -1,0 +1,68 @@
+mixin: workflows
+description: |
+  L3 workflow — multi-step operational process that spans several
+  subsystems or async stages. Examples: deploy pipeline, rollback,
+  backup, incident response, photo import.
+
+  Differs from `behavior` by being multi-actor and often multi-day,
+  with explicit stages, gates and rollback points.
+
+adds_types:
+  - id: workflow
+    layer: L3
+    prefix: WFL
+    file_pattern: "workflows/{slug}-WFL-{number}.md"
+    up_to_types: [capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: trigger
+        title: "Trigger"
+        required: true
+        format: markdown
+        guidance: "How the workflow starts: manual button, schedule, event, alert."
+      - id: stages
+        title: "Stages"
+        required: true
+        format: yaml-block
+        guidance: |
+          Ordered list:
+            - stage: <int>
+              name: <short identifier>
+              actor: <role or "system">
+              actions: <bullets>
+              gate: <optional approval condition>
+              on_failure: <abort | retry | rollback | skip | escalate>
+      - id: success_criteria
+        title: "Success criteria"
+        required: true
+        format: markdown
+      - id: rollback
+        title: "Rollback"
+        required: false
+        format: markdown
+        guidance: "Steps to undo if a late stage fails."
+      - id: diagnostics
+        title: "Diagnostics"
+        required: false
+        format: markdown
+        guidance: "(runbook extension) What signals to check, where to look, escalation path."
+      - id: post_mortem
+        title: "Post-mortem"
+        required: false
+        format: markdown
+        guidance: "(runbook extension) After-incident review template."
+    required_frontmatter:
+      - kind:
+          description: "Workflow flavour"
+          llm_guidance: "Pick one: deploy | rollback | backup | restore | import | export | sync | incident | maintenance."
+
+generator_hints:
+  workflow: |
+    Workflows describe orchestration across subsystems. If the
+    workflow is "operational" (on-call, recovery), fill diagnostics
+    and post_mortem sections — they convert this spec into a runbook.
+    Reference async-jobs and api-contracts that participate, but the
+    workflow itself stays declarative.

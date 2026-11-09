@@ -1,0 +1,90 @@
+mixin: ui-components
+description: |
+  L4 ui-component — a reusable UI element (button, form, table, modal,
+  nav, card). Atomic, code-boundary. Pinned with a stable `data-testid`
+  so user-scenario steps + e2e tests can address it deterministically.
+
+adds_types:
+  - id: ui-component
+    layer_role: code-boundary
+    prefix: CMP
+    file_pattern: "ui/components/{slug}-CMP-{number}.md"
+    up_to_types: [ui-screen]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: visual
+        title: "Visual"
+        required: true
+        format: markdown
+        guidance: |
+          Description of appearance / structure. No CSS — describe
+          parts (label, icon, content slot), variants (primary /
+          secondary / destructive), sizes.
+      - id: interactions
+        title: "Interactions"
+        required: true
+        format: markdown
+        guidance: "Click / hover / focus / keyboard behaviour, including disabled states."
+      - id: props
+        title: "Props / inputs"
+        required: false
+        format: yaml-block
+        guidance: |
+          Inputs the component accepts:
+            - name: label
+              type: string
+              required: true
+            - name: onClick
+              type: callback
+      - id: emits
+        title: "Emits / outputs"
+        required: false
+        format: yaml-block
+        guidance: "Events / callbacks the component fires."
+      - id: a11y
+        title: "Accessibility"
+        required: false
+        format: markdown
+        guidance: "Roles, aria-labels, keyboard navigation, focus management."
+    required_frontmatter:
+      - kind:
+          description: "Component archetype"
+          llm_guidance: "button | form | input | table | modal | nav | card | menu | toast | tabs | tree | dropzone | chart."
+      - testid:
+          description: "Stable data-testid selector"
+          llm_guidance: "kebab-case, unique across ui-components. Used by user-scenario step.component and e2e tests."
+
+validators:
+  - id: ui-component-testid-unique
+    on_type: ui-component
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_ui_component_testids_unique
+
+extends_field:
+  - name: kind
+    add_values:
+      - button
+      - form
+      - input
+      - table
+      - modal
+      - nav
+      - card
+      - menu
+      - toast
+      - tabs
+      - tree
+      - dropzone
+      - chart
+
+generator_hints:
+  ui-component: |
+    Components are reusable. If a button is one-off (only used on a
+    single screen) — describe it inline in the ui-screen layout
+    instead. Use ui-component only when ≥2 screens share it or when a
+    user-scenario references it explicitly. testid must be stable —
+    don't rename later, e2e tests will break.

@@ -1,0 +1,75 @@
+mixin: observability-specs
+description: |
+  L4 observability-spec — a single observability artifact: a metric
+  exposed, an alert rule, a dashboard panel, or a log stream. Atomic
+  to keep blast radius of edits small. Codegen emits Prometheus rules
+  / Grafana panels / OpenTelemetry exporters from this spec.
+
+adds_types:
+  - id: observability-spec
+    layer_role: code-boundary
+    prefix: OBS
+    file_pattern: "observability/{slug}-OBS-{number}.md"
+    up_to_types: [capability, behavior, quality-req]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: definition
+        title: "Definition"
+        required: true
+        format: yaml-block
+        guidance: |
+          Type-specific body.
+          metric:
+            name: <prometheus-style name>
+            type: counter | gauge | histogram | summary
+            labels: [<list>]
+            unit: <unit>
+            source: <where it's emitted>
+          alert:
+            condition: <PromQL or equivalent>
+            for: <duration>
+            severity: critical | warning | info
+            notifies: [<channel ids>]
+          dashboard:
+            title: <human title>
+            panels: [<list of panel descriptors>]
+          log-stream:
+            source: <service / module>
+            format: <json | text>
+            schema: <fields>
+            retention: <duration>
+            sink: <loki | elk | stdout>
+      - id: linked_to
+        title: "Linked to"
+        required: false
+        format: markdown
+        guidance: "Which behavior / capability / quality-req this observation supports."
+      - id: runbook_link
+        title: "Runbook link"
+        required: false
+        format: markdown
+        guidance: "(alerts only) workflow spec id this alert fires into."
+    required_frontmatter:
+      - kind:
+          description: "Observability artifact kind"
+          llm_guidance: "metric | alert | dashboard | log-stream | trace-span."
+      - severity:
+          description: "(alerts) severity level; empty for non-alerts"
+          llm_guidance: "critical | warning | info | (empty for non-alerts)."
+
+extends_field:
+  - name: kind
+    add_values: [metric, alert, dashboard, log-stream, trace-span]
+  - name: severity
+    add_values: [critical, warning, info]
+
+generator_hints:
+  observability-spec: |
+    One artifact per spec. Alerts must link to a runbook (a workflow
+    with diagnostics + post_mortem sections) — if there isn't one,
+    write a stub workflow first via record_spec, then reference it.
+    Metric names follow Prometheus convention: lowercase, underscored,
+    suffixed with unit (_seconds, _bytes, _total).

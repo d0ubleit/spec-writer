@@ -1,0 +1,25 @@
+mixin: code-coverage-gate
+description: |
+  REV-mode coverage threshold for the code-boundary layer. This mixin
+  declares the hook **passively**: the engine logs whether the
+  current coverage ratio is above target / between target and warn /
+  below warn. It does NOT spawn a user dialog.
+
+  The agent (the ownership principle — one agent owns the session) is required
+  by its system prompt to call `coverage_report` after generation
+  passes and, when ratio_covered is below `warn_below`, surface
+  options to the user via `ask_user` before declaring the layer
+  done. The hook is the engine-side notification of the threshold
+  check, not the dialog driver.
+
+hooks:
+  before_layer_complete:
+    - id: code-coverage-gate
+      when:
+        layer_role: code-boundary
+        direction: rev
+      tool: log_coverage_gate
+      thresholds:
+        target: 0.85       # ≥ 85% covered → green
+        warn_below: 0.60   # < 60% covered → red; agent must ask_user
+      log_to: _meta/logs/coverage_gate.jsonl

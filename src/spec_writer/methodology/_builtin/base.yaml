@@ -1,0 +1,31 @@
+# Base methodology — Standard preset (4 layers, no spec types).
+# Mixins introduce types via adds_types / extends_types.
+version: 1
+description: |
+  Standard 4-layer pyramid. Source-boundary at L1, code-boundary at L4,
+  two middle layers (capabilities, behaviors). Mixins fill in spec types.
+
+layers:
+  - id: L1
+    role: source-boundary
+    name: vision
+    purpose: "WHY — intent, scope, success criteria"
+  - id: L2
+    role: middle
+    name: capabilities
+    purpose: "WHAT — system capabilities"
+  - id: L3
+    role: middle
+    name: behaviors
+    purpose: "HOW — scenarios, edge cases"
+  - id: L4
+    role: code-boundary
+    name: technical
+    purpose: "TECHNICAL — codegen-ready contracts"
+    is_final: true
+
+defaults:
+  vertical_link_required: true
+  english_only: true
+  cohesion_warn_short: 20
+  cohesion_warn_long: 500

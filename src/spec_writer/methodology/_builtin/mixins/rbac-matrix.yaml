@@ -1,0 +1,90 @@
+mixin: rbac-matrix
+description: |
+  L4 rbac-matrix — one-of-a-kind summary spec listing every role and
+  the (resource, action) pairs each role can perform. Backed by
+  cross-spec validators that ensure roles referenced in api-contract,
+  ui-screen, async-job, integration-contract frontmatter exist in the
+  matrix — and vice versa (no orphan rows).
+
+  Note: this mixin does NOT add the `roles` field to other types —
+  each producing mixin (api-contracts, ui-screens, async-jobs,
+  integration-contracts) declares it in its own required_frontmatter.
+
+adds_types:
+  - id: rbac-matrix
+    layer_role: code-boundary
+    prefix: RBAC
+    file_pattern: "rbac/{slug}-RBAC-{number}.md"
+    up_to_types: [vision, capability]
+    sections:
+      - id: purpose
+        title: "Purpose"
+        required: true
+        format: markdown
+      - id: roles
+        title: "Roles"
+        required: true
+        format: yaml-block
+        guidance: |
+          Authoritative role list. Each entry:
+            - id: operator
+              description: <one line>
+              inherits_from: <optional role id>
+      - id: resources
+        title: "Resources"
+        required: true
+        format: yaml-block
+        guidance: |
+          Resource types managed by RBAC:
+            - id: site
+              actions: [create, read, update, delete, deploy]
+            - id: profile
+              actions: [create, read, update, approve, reject]
+      - id: matrix
+        title: "Matrix"
+        required: true
+        format: yaml-block
+        guidance: |
+          Allow rules — only what's explicitly granted is allowed:
+            - role: operator
+              grants:
+                - resource: site
+                  actions: [create, read, update, deploy]
+                - resource: profile
+                  actions: [read]
+      - id: special_principals
+        title: "Special principals"
+        required: false
+        format: markdown
+        guidance: "anonymous / system / api-token rules."
+
+validators:
+  - id: rbac-matrix-singleton
+    on_type: rbac-matrix
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_rbac_matrix_singleton
+  - id: rbac-roles-resolved
+    on_type: rbac-matrix
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_rbac_roles_resolved
+  - id: rbac-matrix-completeness
+    on_type: rbac-matrix
+    scope: cross-spec
+    rule_kind: python
+    func_ref: validators.check_rbac_matrix_completeness
+
+metrics:
+  - id: L4-rbac-coverage
+    layer: L4
+    func_ref: metrics.rbac_coverage_ratio
+    target: 1.0
+    warn_below: 0.9
+
+generator_hints:
+  rbac-matrix: |
+    There is exactly ONE rbac-matrix spec per project. If a new role
+    or resource appears in api-contract / ui-screen / async-job /
+    integration-contract frontmatter, update this matrix in the same
+    edit — validators will reject corpus state where roles diverge.

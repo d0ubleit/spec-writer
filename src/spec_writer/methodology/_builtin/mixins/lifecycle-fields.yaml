@@ -1,0 +1,17 @@
+mixin: lifecycle-fields
+description: |
+  Adds the `status` lifecycle field to every spec type. Status moves
+  draft → review → approved (or deprecated/orphan for special cases).
+
+extends_all_types:
+  optional_frontmatter:
+    - status:
+        description: "Lifecycle state of this spec"
+        llm_guidance: |
+          Default `draft`. Set `review` when ready for human review,
+          `approved` after sign-off, `deprecated` when superseded,
+          `orphan` when the underlying code/source was removed.
+
+extends_field:
+  - name: status
+    add_values: [draft, review, approved, deprecated, orphan]
